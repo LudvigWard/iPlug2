@@ -17,6 +17,7 @@ NANOVG_PATH = $(DEPS_PATH)/IGraphics/NanoVG/src
 NANOSVG_PATH = $(DEPS_PATH)/IGraphics/NanoSVG/src
 YOGA_PATH = $(DEPS_PATH)/IGraphics/yoga
 STB_PATH = $(DEPS_PATH)/IGraphics/STB
+COLORMAP_PATH = $(DEPS_PATH)/IGraphics/colormap-shaders
 
 IPLUG_SRC = $(IPLUG_PATH)/IPlugAPIBase.cpp \
 	$(IPLUG_PATH)/IPlugParameter.cpp \
@@ -46,7 +47,8 @@ INCLUDE_PATHS = -I$(PROJECT_ROOT) \
 -I$(NANOSVG_PATH) \
 -I$(STB_PATH) \
 -I$(YOGA_PATH) \
--I$(YOGA_PATH)/yoga
+-I$(YOGA_PATH)/yoga \
+-I$(COLORMAP_PATH)/include
 
 #every cpp file that is needed for both WASM modules
 SRC = $(IPLUG_SRC)
@@ -65,7 +67,6 @@ NANOVG_LDFLAGS = -s USE_WEBGL2=0 -s FULL_ES3=1
 
 # CFLAGS for both WAM and WEB targets
 CFLAGS = $(INCLUDE_PATHS) \
--std=c++17  \
 -Wno-bitwise-op-parentheses \
 -DWDL_NO_DEFINE_MINMAX \
 -DNDEBUG=1
