@@ -107,7 +107,7 @@ public:
       return program;
     };
     
-    printf("Supported GLSL version is %s.\n", (char *)glGetString(GL_SHADING_LANGUAGE_VERSION));
+//    printf("Supported GLSL version is %s.\n", (char *)glGetString(GL_SHADING_LANGUAGE_VERSION));
 
     static const char vs_str[] =
     "attribute vec4 apos;"
@@ -120,7 +120,7 @@ public:
     GLuint vs = compileShader(GL_VERTEX_SHADER, vs_str);
     
     static const char fs_str[] =
-#ifdef OS_WEB
+#ifdef IGRAPHICS_GLES3
     "precision lowp float;"
 #endif
     "varying vec4 color;"
