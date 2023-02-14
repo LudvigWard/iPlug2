@@ -176,5 +176,9 @@ using namespace igraphics;
 - (BOOL) performDragOperation: (id<NSDraggingInfo>) sender;
 //
 - (void) setMouseCursor: (ECursor) cursorType;
+// GL handling
+- (void) activateGLContext;
+- (void) deactivateGLContext;
+
 @end
 

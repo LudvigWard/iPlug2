@@ -944,7 +944,7 @@ extern StaticStorage<CoreTextFontDescriptor> sFontDescriptorCache;
 {
   [super traitCollectionDidChange: previousTraitCollection];
 
-  if(mGraphics)
+  if (mGraphics)
   {
     mGraphics->OnAppearanceChanged([self.traitCollection userInterfaceStyle] == UIUserInterfaceStyleDark ? EUIAppearance::Dark
                                                                                                          : EUIAppearance::Light);
@@ -956,6 +956,18 @@ extern StaticStorage<CoreTextFontDescriptor> sFontDescriptorCache;
   const float scale = mGraphics->GetDrawScale();
   x = mPrevX * scale;
   y = mPrevY * scale;
+}
+
+- (void) activateGLContext
+{
+#ifdef IGRAPHICS_GL
+  [MGLContext setCurrentContext:_glContext];
+#endif
+}
+
+- (void) deactivateGLContext
+{
+  /* NO-OP ? */
 }
 
 @end

@@ -139,7 +139,7 @@ void IGraphicsMac::CloseWindow()
     [pView killTimer];
     [pView removeFromSuperview];
     [pView release];
-      
+
     mView = nullptr;
     OnViewDestroyed();
   }
@@ -669,6 +669,18 @@ EUIAppearance IGraphicsMac::GetUIAppearance() const
   }
   
   return EUIAppearance::Light;
+}
+
+void IGraphicsMac::ActivateGLContext()
+{
+  IGRAPHICS_VIEW* pView = (IGRAPHICS_VIEW*) mView;
+  [pView activateGLContext];
+}
+
+void IGraphicsMac::DeactivateGLContext()
+{
+  IGRAPHICS_VIEW* pView = (IGRAPHICS_VIEW*) mView;
+  [pView deactivateGLContext];
 }
 
 #if defined IGRAPHICS_NANOVG

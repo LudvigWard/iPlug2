@@ -72,7 +72,9 @@ public:
 
   EUIAppearance GetUIAppearance() const override;
 protected:
-
+  void ActivateGLContext() override;
+  void DeactivateGLContext() override;
+  
   IPopupMenu* CreatePlatformPopupMenu(IPopupMenu& menu, const IRECT bounds, bool& isAsync) override;
   void CreatePlatformTextEntry(int paramIdx, const IText& text, const IRECT& bounds, int length, const char* str) override;
 private:
