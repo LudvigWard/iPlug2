@@ -72,9 +72,14 @@ void BundleResourcePath(WDL_String& path, PluginIDType bundleID)
 {
   @autoreleasepool
   {
-    NSBundle* pBundle = [NSBundle bundleWithIdentifier:[NSString stringWithCString:bundleID encoding:NSUTF8StringEncoding]];
-    NSString* pResPath = [pBundle resourcePath];
+    NSString* pBundleID = [NSString stringWithCString:bundleID encoding:NSUTF8StringEncoding];
+    NSBundle* pBundle = [NSBundle bundleWithIdentifier:pBundleID];
     
+    if ([pBundleID containsString:@"AUv3"])
+      pBundle = [NSBundle bundleWithPath: [[[pBundle bundlePath] stringByDeletingLastPathComponent] stringByDeletingLastPathComponent]];
+    
+    NSString* pResPath = [pBundle resourcePath];
+
     path.Set([pResPath UTF8String]);
   }
 }
