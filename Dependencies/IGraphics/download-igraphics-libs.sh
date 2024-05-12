@@ -13,9 +13,9 @@ FREETYPE_VERSION=freetype-2.10.4
 PKGCONFIG_VERSION=pkg-config-0.28
 EXPAT_VERSION=expat-2.2.5
 PNG_VERSION=v1.6.35
-ZLIB_VERSION=zlib-1.2.13
-SKIA_VERSION=chrome/m97
-# SKIA_VERSION=master
+ZLIB_VERSION=zlib-1.3.1
+SKIA_VERSION=chrome/m125
+#SKIA_VERSION=main
 
 # URLs where tarballs of releases can be downloaded - no trailing slash
 PNG_URL=https://github.com/glennrp/libpng/archive

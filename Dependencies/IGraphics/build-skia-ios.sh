@@ -44,7 +44,6 @@ if [ "$#" -eq 1 ]; then
   skia_enable_svg = true
   skia_enable_skottie = true
   skia_enable_pdf = false
-  skia_enable_particles = true
   skia_enable_gpu = true
   skia_enable_skparagraph = true
   cc = "clang"

@@ -8,11 +8,15 @@
 #include "SkDashPathEffect.h"
 #include "SkGradientShader.h"
 #include "SkMaskFilter.h"
+#include "SkBlurTypes.h"
 #include "SkFont.h"
 #include "SkFontMetrics.h"
 #include "SkTypeface.h"
 #include "SkVertices.h"
 #include "SkSwizzle.h"
+#include "SkBitmap.h"
+#include "SkFontMgr.h"
+#include "SkPathEffect.h"
 #pragma warning( pop )
 
 #if defined OS_MAC || defined OS_IOS
@@ -25,7 +29,11 @@
   //even though this is a .cpp we are in an objc(pp) compilation unit
     #import <Metal/Metal.h>
     #import <QuartzCore/CAMetalLayer.h>
-    #include "include/gpu/mtl/GrMtlBackendContext.h"
+    #include "include/gpu/ganesh/mtl/GrMtlBackendContext.h"
+    #include "include/gpu/ganesh/mtl/GrMtlDirectContext.h"
+    #include "include/gpu/ganesh/mtl/GrMtlBackendSurface.h"
+    #include "include/gpu/ganesh/SkSurfaceGanesh.h"
+    #include "include/gpu/GrBackendSurface.h"
   #elif !defined IGRAPHICS_CPU
     #error Define either IGRAPHICS_GL2, IGRAPHICS_GL3, IGRAPHICS_METAL, or IGRAPHICS_CPU for IGRAPHICS_SKIA with OS_MAC
   #endif
@@ -76,7 +84,7 @@ IGraphicsSkia::Bitmap::Bitmap(const char* path, double sourceScale)
   
   assert(data && "Unable to load file at path");
   
-  auto image = SkImage::MakeFromEncoded(data);
+  auto image = SkImages::DeferredFromEncodedData(data);
   
 #ifdef IGRAPHICS_CPU
   image = image->makeRasterImage();
@@ -91,7 +99,7 @@ IGraphicsSkia::Bitmap::Bitmap(const char* path, double sourceScale)
 IGraphicsSkia::Bitmap::Bitmap(const void* pData, int size, double sourceScale)
 {
   auto data = SkData::MakeWithoutCopy(pData, size);
-  auto image = SkImage::MakeFromEncoded(data);
+  auto image = SkImages::DeferredFromEncodedData(data);
   
 #ifdef IGRAPHICS_CPU
   image = image->makeRasterImage();
@@ -335,7 +343,7 @@ void IGraphicsSkia::OnViewInitialized(void* pContext)
   GrMtlBackendContext backendContext = {};
   backendContext.fDevice.retain((__bridge GrMTLHandle) device);
   backendContext.fQueue.retain((__bridge GrMTLHandle) commandQueue);
-  mGrContext = GrDirectContext::MakeMetal(backendContext);
+  mGrContext = GrDirectContexts::MakeMetal(backendContext);
   mMTLDevice = (void*) device;
   mMTLCommandQueue = (void*) commandQueue;
   mMTLLayer = pContext;
@@ -369,7 +377,7 @@ void IGraphicsSkia::DrawResize()
   if (mGrContext.get())
   {
     SkImageInfo info = SkImageInfo::MakeN32Premul(w, h);
-    mSurface = SkSurface::MakeRenderTarget(mGrContext.get(), SkBudgeted::kYes, info);
+    mSurface = SkSurfaces::RenderTarget(mGrContext.get(), skgpu::Budgeted::kYes, info);
   }
 #else
   #ifdef OS_WIN
@@ -437,9 +445,8 @@ void IGraphicsSkia::BeginFrame()
     
     GrMtlTextureInfo fbInfo;
     fbInfo.fTexture.retain((const void*)(drawable.texture));
-    GrBackendRenderTarget backendRT(width, height, 1 /* sample count/MSAA */, fbInfo);
-    
-    mScreenSurface = SkSurface::MakeFromBackendRenderTarget(mGrContext.get(), backendRT, kTopLeft_GrSurfaceOrigin, kBGRA_8888_SkColorType, nullptr, nullptr);
+    auto backendRT = GrBackendRenderTargets::MakeMtl(width, height, fbInfo);
+    mScreenSurface = SkSurfaces::WrapBackendRenderTarget(mGrContext.get(), backendRT, kTopLeft_GrSurfaceOrigin, kBGRA_8888_SkColorType, nullptr, nullptr);
     
     mMTLDrawable = (void*) drawable;
     assert(mScreenSurface);
@@ -477,9 +484,11 @@ void IGraphicsSkia::EndFrame()
   #endif
 #else // GPU
   mSurface->draw(mScreenSurface->getCanvas(), 0.0, 0.0, nullptr);
-    
-  mScreenSurface->getCanvas()->flush();
-  
+
+  if (auto dContext = GrAsDirectContext(mScreenSurface->getCanvas()->recordingContext())) {
+    dContext->flushAndSubmit();
+  }
+
   #ifdef IGRAPHICS_METAL
     id<MTLCommandBuffer> commandBuffer = [(id<MTLCommandQueue>) mMTLCommandQueue commandBuffer];
     commandBuffer.label = @"Present";
@@ -563,6 +572,64 @@ IColor IGraphicsSkia::GetPoint(int x, int y)
   return IColor(SkColorGetA(color), SkColorGetR(color), SkColorGetG(color), SkColorGetB(color));
 }
 
+//#if defined(SK_BUILD_FOR_WIN) && (defined(SK_FONTMGR_GDI_AVAILABLE) || defined(SK_FONTMGR_DIRECTWRITE_AVAILABLE))
+//#include "include/ports/SkTypeface_win.h"
+//#endif
+//
+//#if defined(SK_BUILD_FOR_ANDROID) && defined(SK_FONTMGR_ANDROID_AVAILABLE)
+//#include "include/ports/SkFontMgr_android.h"
+//#endif
+//
+//#if defined(SK_FONTMGR_CORETEXT_AVAILABLE) && (defined(SK_BUILD_FOR_IOS) || defined(SK_BUILD_FOR_MAC))
+#include "include/ports/SkFontMgr_mac_ct.h"
+//#endif
+//
+//#if defined(SK_FONTMGR_FONTCONFIG_AVAILABLE)
+//#include "include/ports/SkFontMgr_fontconfig.h"
+//#endif
+//
+//#if defined(SK_FONTMGR_FREETYPE_DIRECTORY_AVAILABLE)
+//#include "include/ports/SkFontMgr_directory.h"
+//#endif
+//
+//#if defined(SK_FONTMGR_FREETYPE_EMPTY_AVAILABLE)
+//#include "include/ports/SkFontMgr_empty.h"
+//#endif
+//
+//#ifndef SK_FONT_FILE_PREFIX
+//#  if defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_IOS)
+//#    define SK_FONT_FILE_PREFIX "/System/Library/Fonts/"
+//#  else
+//#    define SK_FONT_FILE_PREFIX "/usr/share/fonts/"
+//#  endif
+//#endif
+
+/// Creates a new system font manager, empty if none is available.
+extern "C" SkFontMgr* C_SkFontMgr_NewSystem() {
+    sk_sp<SkFontMgr> mgr;
+//#if defined(SK_BUILD_FOR_WIN) && defined(SK_FONTMGR_GDI_AVAILABLE)
+//    mgr = SkFontMgr_New_GDI();
+//#elif defined(SK_BUILD_FOR_ANDROID) && defined(SK_FONTMGR_ANDROID_AVAILABLE)
+//    mgr = SkFontMgr_New_Android(nullptr);
+//#elif defined(SK_BUILD_FOR_WIN) && defined(SK_FONTMGR_DIRECTWRITE_AVAILABLE)
+//    mgr = SkFontMgr_New_DirectWrite();
+//#elif defined(SK_FONTMGR_CORETEXT_AVAILABLE) && (defined(SK_BUILD_FOR_IOS) || defined(SK_BUILD_FOR_MAC))
+    mgr = SkFontMgr_New_CoreText(nullptr);
+//#elif defined(SK_FONTMGR_FONTCONFIG_AVAILABLE)
+//    mgr = SkFontMgr_New_FontConfig(nullptr);
+//#elif defined(SK_FONTMGR_FREETYPE_DIRECTORY_AVAILABLE)
+//    // In particular, this is used on ChromeOS, which is Linux-like but doesn't have
+//    // FontConfig.
+//    mgr = SkFontMgr_New_Custom_Directory(SK_FONT_FILE_PREFIX);
+//#elif defined(SK_FONTMGR_FREETYPE_EMPTY_AVAILABLE)
+//    mgr = SkFontMgr_New_Custom_Empty();
+//#else
+//    mgr = SkFontMgr::RefEmpty();
+//#endif
+  return mgr.release();
+}
+
+
 bool IGraphicsSkia::LoadAPIFont(const char* fontID, const PlatformFontPtr& font)
 {
   StaticStorage<Font>::Accessor storage(sFontCache);
@@ -576,12 +643,11 @@ bool IGraphicsSkia::LoadAPIFont(const char* fontID, const PlatformFontPtr& font)
   if (data->IsValid())
   {
     auto wrappedData = SkData::MakeWithoutCopy(data->Get(), data->GetSize());
-    int index = data->GetFaceIdx();
-    auto typeface = SkTypeface::MakeFromData(wrappedData, index);
-    
-    if (typeface)
+    sk_sp<SkFontMgr> fontManager = sk_sp<SkFontMgr>(C_SkFontMgr_NewSystem());
+    auto typeFace = fontManager->makeFromData(wrappedData);
+    if (typeFace)
     {
-      storage.Add(new Font(std::move(data), typeface), fontID);
+      storage.Add(new Font(std::move(data), typeFace), fontID);
       return true;
     }
   }
@@ -859,11 +925,11 @@ APIBitmap* IGraphicsSkia::CreateAPIBitmap(int width, int height, float scale, do
   SkImageInfo info = SkImageInfo::MakeN32Premul(width, height);
   if (cacheable)
   {
-    surface = SkSurface::MakeRasterN32Premul(width, height);
+    surface = SkSurfaces::Raster(info);
   }
   else
   {
-    surface = SkSurface::MakeRenderTarget(mGrContext.get(), SkBudgeted::kYes, info);
+    surface = SkSurfaces::RenderTarget(mGrContext.get(), skgpu::Budgeted::kYes, info);
   }
   #else
   surface = SkSurface::MakeRasterN32Premul(width, height);
@@ -915,7 +981,7 @@ void IGraphicsSkia::ApplyShadowMask(ILayerPtr& layer, RawBitmapData& mask, const
     
   SkImageInfo info = SkImageInfo::MakeN32Premul(width, height);
   SkPixmap pixMap(info, mask.Get(), rowBytes);
-  sk_sp<SkImage> image = SkImage::MakeFromRaster(pixMap, nullptr, nullptr);
+  sk_sp<SkImage> image = SkImages::RasterFromPixmap(pixMap, nullptr, nullptr);
   sk_sp<SkImage> foreground;
     
   // Copy the foreground if needed
