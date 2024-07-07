@@ -3,12 +3,10 @@ cmake_minimum_required(VERSION 3.11)
 set(VST2_SDK "${IPLUG2_DIR}/Dependencies/IPlug/VST2_SDK" CACHE PATH "VST2 SDK directory.")
 
 if (WIN32)
-  set(fn "VstPlugins")
   if (PROCESSOR_ARCH STREQUAL "Win32")
-    set(_paths "$ENV{ProgramFiles(x86)}/${fn}" "$ENV{ProgramFiles(x86)}/Steinberg/${fn}")
+    set(_paths "$ENV{ProgramFiles(x86)}/${fn}" "$ENV{ProgramFiles(x86)}/Steinberg/VstPlugins")
   endif()
-  # Append this for x86, x64, and ARM I guess
-  list(APPEND _paths "'$ENV{ProgramFiles}/${fn}'" "'$ENV{ProgramFiles}/Steinberg/${fn}'")
+  list(APPEND _paths "'$ENV{ProgramFiles}/${fn}'" "'$ENV{ProgramFiles}/Steinberg/VstPlugins'")
 elseif (OS_MAC)
   set(fn "VST")
   set(_paths "$ENV{HOME}/Library/Audio/Plug-Ins/${fn}" "/Library/Audio/Plug-Ins/${fn}")
@@ -81,7 +79,6 @@ function(iplug_configure_vst2 target)
 
     add_custom_command(TARGET ${target} POST_BUILD
       COMMAND ${CMAKE_COMMAND} ARGS "-E" "copy_directory" "${out_dir}" "${install_dir}")
-
 
   elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(out_dir "${CMAKE_BINARY_DIR}/${PLUG_NAME}.vst2")

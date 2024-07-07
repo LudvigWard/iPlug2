@@ -13,6 +13,7 @@ set VST3_32_PATH="@VST3_32_PATH@"
 set VST3_64_PATH="@VST3_64_PATH@"
 set AAX_32_PATH="@AAX_32_PATH@"
 set AAX_64_PATH="@AAX_64_PATH@"
+set CLAP_PATH="@CLAP_PATH@"
 set BUILD_DIR="@plugin_build_dir@"
 set VST_ICON="@IPLUG2_VST_ICON@"
 set AAX_ICON="@IPLUG2_AAX_ICON@"
@@ -26,6 +27,7 @@ set VST3_32_PATH=%VST3_32_PATH:/=\%
 set VST3_64_PATH=%VST3_64_PATH:/=\%
 set AAX_32_PATH=%AAX_32_PATH:/=\%
 set AAX_64_PATH=%AAX_64_PATH:/=\%
+set CLAP_PATH=%CLAP_PATH:/=\%
 set BUILD_DIR=%BUILD_DIR:/=\%
 set VST_ICON=%VST_ICON:/=\%
 set AAX_ICON=%AAX_ICON:/=\%
@@ -41,6 +43,7 @@ echo VST2_32_PATH %VST2_32_PATH%
 echo VST2_64_PATH %VST2_64_PATH% 
 echo VST3_32_PATH %VST3_32_PATH% 
 echo VST3_64_PATH %VST3_64_PATH% 
+echo CLAP_PATH %CLAP_PATH% 
 echo BUILD_DIR %BUILD_DIR%
 echo VST_ICON %VST_ICON% 
 echo AAX_ICON %AAX_ICON% 
@@ -85,6 +88,11 @@ if %PLATFORM% == "Win32" (
     call %CREATE_BUNDLE_SCRIPT% %BUILD_DIR%\%NAME%.aaxplugin %AAX_ICON% %FORMAT%
     xcopy /E /H /Y %BUILD_DIR%\%NAME%.aaxplugin\Contents\* %AAX_32_PATH%\%NAME%.aaxplugin\Contents\
   )
+
+  if %FORMAT% == ".clap" (
+    echo copying binary to CLAP Plugins folder ... 
+    copy /y %BUILT_BINARY% %CLAP_PATH%
+  )
 )
 
 if %PLATFORM% == "x64" (
@@ -127,5 +135,10 @@ if %PLATFORM% == "x64" (
     echo copying 64bit bundle to 64bit AAX Plugins folder ... 
     call %CREATE_BUNDLE_SCRIPT% %BUILD_DIR%\%NAME%.aaxplugin %AAX_ICON% %FORMAT%
     xcopy /E /H /Y %BUILD_DIR%\%NAME%.aaxplugin\Contents\* %AAX_64_PATH%\%NAME%.aaxplugin\Contents\
+  )
+    
+  if %FORMAT% == ".clap" (
+    echo copying binary to CLAP Plugins folder ...
+    copy /y %BUILT_BINARY% %CLAP_PATH%
   )
 )

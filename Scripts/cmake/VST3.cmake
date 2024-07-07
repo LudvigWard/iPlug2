@@ -4,13 +4,11 @@ set(VST3_SDK "${IPLUG2_DIR}/Dependencies/IPlug/VST3_SDK" CACHE PATH "VST3 SDK di
 set(vst3_target_arch "")
 
 if (WIN32)
-  set(fn "VST3")
   if (CMAKE_SYSTEM_PROCESSOR MATCHES "X86")
-    # $ENV{CommonProgramFiles} ???
-    set(_paths "C:/Program Files (x86)/Common Files/${fn}" "C:/Program Files/Common Files/${fn}")
+    set(_paths "C:/Program Files (x86)/Common Files/VST3" "C:/Program Files/Common Files/VST3")
     set(vst3_target_arch "x86")
   elseif ((CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "AMD64") OR (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "IA64"))
-    set(_paths "C:/Program Files/Common Files/${fn}")
+    set(_paths "C:/Program Files/Common Files/VST3")
     set(vst3_target_arch "x86_64")
   endif()
   set(vst3_target_arch "${vst3_target_arch}-win")

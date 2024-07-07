@@ -4,7 +4,11 @@ set(CLAP_SDK "${IPLUG2_DIR}/Dependencies/IPlug/CLAP_SDK" CACHE PATH "CLAP SDK di
 set(CLAP_HELPERS "${IPLUG2_DIR}/Dependencies/IPlug/CLAP_HELPERS" CACHE PATH "CLAP HELPERS directory.")
 
 if (WIN32)
-  
+  if (CMAKE_SYSTEM_PROCESSOR MATCHES "X86")
+    set(_paths "C:/Program Files (x86)/Common Files/CLAP" "C:/Program Files/Common Files/CLAP")
+  elseif ((CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "AMD64") OR (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "IA64"))
+    set(_paths "C:/Program Files/Common Files/CLAP")
+  endif()
 elseif (OS_MAC)
   set(_paths "$ENV{HOME}/Library/Audio/Plug-Ins/CLAP" "/Library/Audio/Plug-Ins/CLAP")
 elseif (OS_LINUX)
